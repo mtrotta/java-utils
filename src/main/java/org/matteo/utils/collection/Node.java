@@ -10,7 +10,7 @@ import java.util.*;
  * User: Matteo Trotta
  * Date: 12/12/12
  */
-public class Node<K extends Comparable<K>, V> implements Serializable {
+public class Node<K extends Comparable<K>, V> {
 
     private final Comparator<K> comparator;
     private final K key;
