@@ -6,5 +6,7 @@ package org.matteo.utils.exception;
  * Date: 20/06/12
  */
 public interface ShutdownAction {
+
     void shutdownNow();
+
 }

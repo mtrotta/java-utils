@@ -1,7 +1,6 @@
 package org.matteo.utils.concurrency.dequeuer;
 
 import org.junit.jupiter.api.Test;
-import org.matteo.utils.exception.ExceptionHandler;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -13,13 +12,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Matteo Trotta
  * Date: 02/07/12
  */
-class DequeuerTest {
+class SingleBalancedDequeuerTest {
 
     public static class StringProcessor implements Processor<String> {
 
@@ -100,165 +100,9 @@ class DequeuerTest {
     }
 
     @Test
-    void testQueue() throws Exception {
-        int threads = 10;
-        StringProcessor processor = new StringProcessor();
-        final Dequeuer<String> dequeuer = new Dequeuer<>(processor, false, threads);
-        final int num = 1 << 10;
-        for (int i = 0; i < num; i++) {
-            dequeuer.enqueue(String.valueOf(i));
-        }
-        assertTrue(dequeuer.awaitTermination(1, TimeUnit.HOURS));
-        assertEquals(num, processor.ctr.get());
-        assertTrue(dequeuer.isTerminated());
-    }
-
-    @Test
-    void testQueueTimeout() throws Exception {
-        int threads = 10;
-        StringProcessor processor = new StringProcessor();
-        final Dequeuer<String> dequeuer = new Dequeuer<>(processor, false, threads);
-        final int num = 1 << 12;
-        for (int i = 0; i < num; i++) {
-            dequeuer.enqueue(String.valueOf(i));
-        }
-        assertFalse(dequeuer.awaitTermination(1, TimeUnit.SECONDS));
-        assertTrue(num != processor.ctr.get());
-        assertTrue(dequeuer.isTerminated());
-    }
-
-    @Test
-    void testQueueMultiProcessor() throws Exception {
-        int threads = 10;
-        List<StringProcessor> processors = new ArrayList<>();
-        for (int i = 0; i < threads; i++) {
-            processors.add(new StringProcessor());
-        }
-        final Dequeuer<String> dequeuer = new Dequeuer<>(processors, true);
-        final int num = 1 << 14;
-        for (int i = 0; i < num; i++) {
-            dequeuer.enqueue(String.valueOf(i));
-        }
-        System.out.println("Queue full");
-        dequeuer.awaitTermination(1, TimeUnit.HOURS);
-        assertTrue(dequeuer.isTerminated());
-    }
-
-    private static final RuntimeException SIMULATED_EXCEPTION = new RuntimeException("Simulated exception");
-
-    private boolean sentinel;
-
-    @Test
-    void testQueueBadProcessor() throws Exception {
-        final AtomicInteger ctr = new AtomicInteger();
-        Processor<String> processor = new Processor<String>() {
-            @Override
-            public void process(String s) {
-                ctr.incrementAndGet();
-                throw SIMULATED_EXCEPTION;
-            }
-
-            @Override
-            public void terminate() {
-            }
-        };
-        final Dequeuer<String> dequeuer = new Dequeuer<>(processor, true, 1);
-        final int num = 15;
-        try {
-            for (int i = 0; i < num; i++) {
-                dequeuer.enqueue(String.valueOf(i));
-            }
-            fail();
-        } catch (RejectedObjectException ignore) {
-        }
-        try {
-            dequeuer.awaitTermination(1, TimeUnit.HOURS);
-        } catch (Exception e) {
-            assertSame(SIMULATED_EXCEPTION, e);
-        }
-        assertEquals(1, ctr.get());
-        assertTrue(dequeuer.isTerminated());
-        assertTrue(dequeuer.isAborted());
-    }
-
-    @Test
-    void testQueueBadProcessorWithShutdownAction() throws Exception {
-        final AtomicInteger ctr = new AtomicInteger();
-        Processor<String> processor = new Processor<String>() {
-            @Override
-            public void process(String s) throws Exception {
-                ctr.incrementAndGet();
-                Thread.sleep(1000);
-                throw SIMULATED_EXCEPTION;
-            }
-
-            @Override
-            public void terminate() {
-            }
-        };
-        final Dequeuer<String> dequeuer = new Dequeuer<>(processor, true, 1);
-        ExceptionHandler exceptionHandler = dequeuer.getExceptionHandler();
-        exceptionHandler.register(() -> sentinel = true);
-        exceptionHandler.register(Exception::printStackTrace);
-        dequeuer.enqueue("A");
-        try {
-            dequeuer.awaitTermination(1, TimeUnit.HOURS);
-        } catch (Exception e) {
-            assertSame(SIMULATED_EXCEPTION, e);
-        }
-        assertEquals(1, ctr.get());
-        assertEquals(0, dequeuer.getUnprocessed().size());
-        assertTrue(dequeuer.isTerminated());
-        assertTrue(dequeuer.isAborted());
-        assertTrue(dequeuer.isAborted());
-        assertSame(SIMULATED_EXCEPTION, dequeuer.getExceptionHandler().getException());
-        assertTrue(sentinel);
-    }
-
-    private boolean terminated = false;
-
-    @Test
-    void testQueueBadProcessorWithShutdownActionTerminate() {
-        final AtomicInteger ctr = new AtomicInteger();
-        Processor<String> processor = new Processor<String>() {
-            @Override
-            public void process(String s) {
-                ctr.incrementAndGet();
-                throw SIMULATED_EXCEPTION;
-            }
-
-            @Override
-            public void terminate() {
-                terminated = true;
-            }
-        };
-        final Dequeuer<String> dequeuer = new Dequeuer<>(processor, true, 1);
-        ExceptionHandler exceptionHandler = dequeuer.getExceptionHandler();
-        exceptionHandler.register(() -> sentinel = true);
-        exceptionHandler.register(Exception::printStackTrace);
-        try {
-            dequeuer.enqueue("A");
-            dequeuer.enqueue("B");
-            dequeuer.enqueue("C");
-        } catch (RejectedObjectException | InterruptedException ignore) {
-        }
-        try {
-            dequeuer.awaitTermination(1, TimeUnit.HOURS);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        assertTrue(dequeuer.isTerminated());
-        assertTrue(dequeuer.isAborted());
-        assertTrue(dequeuer.isAborted());
-        assertSame(SIMULATED_EXCEPTION, dequeuer.getExceptionHandler().getException());
-        assertTrue(sentinel);
-        assertTrue(terminated);
-    }
-
-    @Test
     void testBalanceSingleProcessor() throws Exception {
         long begin = System.currentTimeMillis();
-        final Dequeuer<String> dequeuer = new Dequeuer<>(new StringProcessor(), true, 1, 20, 1);
+        final Dequeuer<String> dequeuer = new SingleBalancedDequeuer<>(new StringProcessor(), true, 1, 20, 1);
         final int num = 15000;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -272,7 +116,7 @@ class DequeuerTest {
 
     @Test
     void testBalanceFactory() throws Exception {
-        final Dequeuer<String> dequeuer = new Dequeuer<>(StringProcessor::new, false, 1, 20, 20);
+        final Dequeuer<String> dequeuer = new SingleBalancedDequeuer<>(StringProcessor::new, false, 1, 20, 20);
         final int num = 50000;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -282,11 +126,11 @@ class DequeuerTest {
         assertTrue(dequeuer.isTerminated());
     }
 
-    public static class NotThreadSafeProcessor implements Processor<String> {
+    public static class ThreadUnsafeProcessor implements Processor<String> {
 
         private final Collection<String> collection = new HashSet<>(1);
 
-        NotThreadSafeProcessor() {
+        ThreadUnsafeProcessor() {
             System.out.println("Created");
         }
 
@@ -307,7 +151,7 @@ class DequeuerTest {
 
     @Test
     void testBalanceFactoryMin() throws Exception {
-        final Dequeuer<String> dequeuer = new Dequeuer<>(NotThreadSafeProcessor::new, false, 1, 5, 1);
+        final Dequeuer<String> dequeuer = new SingleBalancedDequeuer<>(ThreadUnsafeProcessor::new, false, 1, 5, 1);
         final long num = 1 << 22;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -328,8 +172,8 @@ class DequeuerTest {
         for (int i = 0; i < 20; i++) {
             processors.add(new StupidProcessor(Integer.toString(i)));
         }
-        final Dequeuer<String> dequeuer = new Dequeuer<>(processors, false, 1, 1);
-        dequeuer.setProfile(Dequeuer.Profile.FAST);
+        final SingleBalancedDequeuer<String> dequeuer = new SingleBalancedDequeuer<>(processors, false, 1, 1);
+        dequeuer.setProfile(SingleBalancedDequeuer.Profile.FAST);
         final int num = 1 << 20;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -344,8 +188,9 @@ class DequeuerTest {
         for (int i = 0; i < 20; i++) {
             processors.add(new SmartProcessor(Integer.toString(i)));
         }
-        final Dequeuer<Collection<String>> dequeuer = new Dequeuer<>(processors, true, 1, 1);
-        dequeuer.setProfile(Dequeuer.Profile.FAST);
+        final SingleBalancedDequeuer<Collection<String>> dequeuer = new SingleBalancedDequeuer<>(processors, true, 1, 1);
+        SingleBalancedDequeuer.Profile profile = SingleBalancedDequeuer.Profile.FAST;
+        dequeuer.setProfile(profile);
         final int num = 1 << 24;
         List<String> list = new ArrayList<>();
         for (int i = 0; i < num; i++) {
@@ -357,6 +202,7 @@ class DequeuerTest {
         }
         dequeuer.awaitTermination(1, TimeUnit.HOURS);
         assertTrue(dequeuer.isTerminated());
+        assertEquals(profile, dequeuer.getProfile());
     }
 
     @Test
@@ -373,7 +219,8 @@ class DequeuerTest {
 
             }
         };
-        final Dequeuer<String> dequeuer = new Dequeuer<>(supplier, true, 1, 10, 1);
+        final SingleBalancedDequeuer<String> dequeuer = new SingleBalancedDequeuer<>(supplier, true, 1, 10, 1);
+        dequeuer.setProfile(SingleBalancedDequeuer.Profile.SLOW);
         final long num = 1 << 23;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(Math.random()));
@@ -394,7 +241,7 @@ class DequeuerTest {
             public void terminate() {
             }
         };
-        final Dequeuer<String> dequeuer = new Dequeuer<>(supplier, true, 1, 10, 1);
+        final Dequeuer<String> dequeuer = new SingleBalancedDequeuer<>(supplier, true, 1, 10, 1);
         final long num = 1 << 23;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(Math.random()));
@@ -402,5 +249,41 @@ class DequeuerTest {
         dequeuer.awaitTermination(1, TimeUnit.HOURS);
         assertTrue(dequeuer.isTerminated());
     }
+
+    private static final RuntimeException SIMULATED_EXCEPTION = new RuntimeException("Simulated exception");
+
+    @Test
+    void testQueueBadProcessor() throws Exception {
+        final AtomicInteger ctr = new AtomicInteger();
+        Processor<String> processor = new Processor<String>() {
+            @Override
+            public void process(String s) {
+                ctr.incrementAndGet();
+                throw SIMULATED_EXCEPTION;
+            }
+
+            @Override
+            public void terminate() {
+            }
+        };
+        final Dequeuer<String> dequeuer = new SingleBalancedDequeuer<>(processor);
+        final int num = 15;
+        try {
+            for (int i = 0; i < num; i++) {
+                dequeuer.enqueue(String.valueOf(i));
+            }
+            fail();
+        } catch (RejectedObjectException ignore) {
+        }
+        try {
+            dequeuer.awaitTermination(1, TimeUnit.HOURS);
+        } catch (Exception e) {
+            assertSame(SIMULATED_EXCEPTION, e);
+        }
+        assertEquals(1, ctr.get());
+        assertTrue(dequeuer.isTerminated());
+        assertTrue(dequeuer.isAborted());
+    }
+
 
 }

@@ -1,5 +1,11 @@
 package org.matteo.utils.concurrency.dequeuer;
 
+import org.matteo.utils.exception.ExceptionHandler;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -7,80 +13,85 @@ import java.util.concurrent.TimeUnit;
  * User: Matteo Trotta
  * Date: 02/07/12
  */
-public class ChainedDequeuer<T> extends Dequeuer<T> {
+public class ChainedDequeuer<T> implements Dequeuer<T> {
 
-    private ChainedDequeuer<T> previous;
-    private ChainedDequeuer<T> next;
+    private final LinkedList<Dequeuer<T>> chain = new LinkedList<>();
 
-    public ChainedDequeuer(Processor<T> processor, int threads) {
-        this(processor, true, threads);
-    }
+    private final ExceptionHandler exceptionHandler = new ExceptionHandler();
 
-    public ChainedDequeuer(Processor<T> processor, boolean synchronous, int threads) {
-        super(processor, synchronous, threads);
-    }
-
-    public ChainedDequeuer<T> append(ChainedDequeuer<T> next) {
-        this.next = next;
-        next.previous = this;
-        next.setExceptionHandler(getExceptionHandler());
-        return next;
-    }
-
-    public ChainedDequeuer<T> getRoot() {
-        return previous != null ? previous.getRoot() : this;
+    public ChainedDequeuer(Collection<SingleDequeuer<T>> dequeuers) {
+        if (dequeuers.isEmpty()) {
+            throw new IllegalArgumentException("An empty chained dequeuer doesn't make sense");
+        }
+        Iterator<SingleDequeuer<T>> iterator = dequeuers.iterator();
+        SingleDequeuer<T> previous = null;
+        while (iterator.hasNext()) {
+            SingleDequeuer<T> next = iterator.next();
+            next.setExceptionHandler(exceptionHandler);
+            chain.add(next);
+            if (previous != null) {
+                previous.setCompleteAction(next::enqueue);
+            }
+            previous = next;
+        }
     }
 
     @Override
     public synchronized void shutdownNow() {
-        getRoot().shutdownNowChain();
-    }
-
-    private synchronized void shutdownNowChain() {
-        super.shutdownNow();
-        if (next != null) {
-            next.shutdownNowChain();
+        for (Dequeuer<T> dequeuer : chain) {
+            dequeuer.shutdownNow();
         }
     }
 
-    public boolean awaitTermination(long time, TimeUnit unit) throws Exception {
-        return getRoot().awaitChainTermination(time, unit);
+    @Override
+    public void shutdown() {
+        for (Dequeuer<T> dequeuer : chain) {
+            dequeuer.shutdown();
+        }
     }
 
-    private boolean awaitChainTermination(long time, TimeUnit unit) throws Exception {
-        boolean elapsed = super.awaitTermination(time, unit);
-        if (next != null) {
-            elapsed |= next.awaitChainTermination(time, unit);
+    @Override
+    public boolean awaitTermination(long time, TimeUnit unit) throws Exception {
+        boolean elapsed = false;
+        for (Dequeuer<T> dequeuer : chain) {
+            elapsed |= dequeuer.awaitTermination(time, unit);
         }
         return elapsed;
     }
 
     @Override
+    public Collection<T> getUnprocessed() {
+        final Collection<T> unprocessed = new ArrayList<>();
+        chain.forEach(c -> unprocessed.addAll(c.getUnprocessed()));
+        return unprocessed;
+    }
+
+    @Override
+    public boolean isTerminated() {
+        boolean terminated = true;
+        for (Dequeuer<T> dequeuer : chain) {
+            terminated &= dequeuer.isTerminated();
+        }
+        return terminated;
+    }
+
+    @Override
     public boolean isAborted() {
-        return getRoot().isChainAborted();
-    }
-
-    private boolean isChainAborted() {
-        return super.isAborted() || next.isChainAborted();
-    }
-
-    protected Worker createWorker(Processor<T> processor) {
-        return new ChainWorker(processor);
-    }
-
-    protected class ChainWorker extends Worker {
-
-        public ChainWorker(Processor<T> processor) {
-            super(processor);
+        boolean aborted = false;
+        for (Dequeuer<T> dequeuer : chain) {
+            aborted |= dequeuer.isAborted();
         }
+        return aborted;
+    }
 
-        @Override
-        protected void work(T t) throws Exception {
-            super.work(t);
-            if (next != null) {
-                next.enqueue(t);
-            }
-        }
+    @Override
+    public void enqueue(T t) throws RejectedObjectException, InterruptedException {
+        chain.getFirst().enqueue(t);
+    }
+
+    @Override
+    public ExceptionHandler getExceptionHandler() {
+        return exceptionHandler;
     }
 
 }
