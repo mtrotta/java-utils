@@ -2,17 +2,17 @@ package org.matteo.utils.collection;
 
 import java.util.*;
 
-public class PrioritySet<T extends Comparable<T>> implements Set<T> {
+public class PriorityHashSet<T extends Comparable<T>> implements Set<T> {
 
     private final Map<T, T> map = new HashMap<>();
 
     private final Comparator<T> comparator;
 
-    public PrioritySet() {
+    public PriorityHashSet() {
         this.comparator = Comparator.naturalOrder();
     }
 
-    public PrioritySet(Comparator<T> comparator) {
+    public PriorityHashSet(Comparator<T> comparator) {
         this.comparator = comparator;
     }
 

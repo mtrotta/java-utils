@@ -7,28 +7,28 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class PrioritySetTest {
+class PriorityHashSetTest {
 
     @Test
     void testAdd() {
-        Set<Mock> prioritySet = new PrioritySet<>();
+        Set<Mock> set = new PriorityHashSet<>();
 
         String id1 = "ID1";
-        assertTrue(prioritySet.add(new Mock(id1, 10)));
-        assertTrue(prioritySet.add(new Mock(id1, 9)));
+        assertTrue(set.add(new Mock(id1, 10)));
+        assertTrue(set.add(new Mock(id1, 9)));
         Mock bestId1 = new Mock(id1, 8);
-        assertTrue(prioritySet.add(bestId1));
-        assertFalse(prioritySet.add(new Mock(id1, 15)));
+        assertTrue(set.add(bestId1));
+        assertFalse(set.add(new Mock(id1, 15)));
 
         String id2 = "ID2";
-        assertTrue(prioritySet.add(new Mock(id2, 10)));
-        assertFalse(prioritySet.add(new Mock(id2, 11)));
+        assertTrue(set.add(new Mock(id2, 10)));
+        assertFalse(set.add(new Mock(id2, 11)));
         Mock bestId2 = new Mock(id2, -1);
-        assertTrue(prioritySet.add(bestId2));
+        assertTrue(set.add(bestId2));
 
-        assertEquals(2, prioritySet.size());
+        assertEquals(2, set.size());
 
-        for (Mock mock : prioritySet) {
+        for (Mock mock : set) {
             if (id1.equals(mock.id)) {
                 assertSame(mock, bestId1);
             } else if (id2.equals(mock.id)) {
