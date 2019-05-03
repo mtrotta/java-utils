@@ -9,6 +9,9 @@ import java.util.*;
  */
 public class Cleaner {
 
+    private Cleaner() {
+    }
+
     public static <T> List<T> clean(Eraser<T> eraser, Date today, List<CheckerConfiguration> checkers, boolean simulation) throws Exception {
 
         List<T> deleted = new ArrayList<>();

@@ -4,6 +4,9 @@ import java.util.*;
 
 public class DateUtility {
 
+    private DateUtility() {
+    }
+
     private static final WorkingCalendar workingCalendar = new TargetCalendar();
 
     private static Calendar getCalendar(Date date) {

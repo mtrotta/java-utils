@@ -7,6 +7,9 @@ import java.util.List;
 
 public class DeltaCalculator {
 
+    private DeltaCalculator() {
+    }
+
     public static <T extends Delta<T>> List<T> delta(List<T> list1, List<T> list2) {
 
         list1.sort(Comparator.naturalOrder());

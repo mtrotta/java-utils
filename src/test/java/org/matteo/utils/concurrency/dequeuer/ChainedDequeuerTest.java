@@ -30,6 +30,7 @@ class ChainedDequeuerTest {
         dequeuer.enqueue("1");
         dequeuer.shutdown();
         dequeuer.awaitTermination(1, TimeUnit.HOURS);
+        assertTrue(dequeuer.isTerminated());
     }
 
     @Test
@@ -53,6 +54,8 @@ class ChainedDequeuerTest {
             System.out.println("Queue full");
 
             chainedDequeuer.awaitTermination(1, TimeUnit.HOURS);
+
+            assertTrue(chainedDequeuer.isTerminated());
 
             assertEquals(num, processor1.ctr);
             assertEquals(num, processor2.ctr);

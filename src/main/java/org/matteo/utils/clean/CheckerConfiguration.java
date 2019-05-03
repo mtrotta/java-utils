@@ -1,5 +1,7 @@
 package org.matteo.utils.clean;
 
+import java.util.Objects;
+
 public class CheckerConfiguration implements Comparable<CheckerConfiguration> {
 
     private final DateChecker checker;
@@ -23,6 +25,21 @@ public class CheckerConfiguration implements Comparable<CheckerConfiguration> {
     @Override
     public int compareTo(CheckerConfiguration o) {
         return Integer.compare(priority, o.priority);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CheckerConfiguration that = (CheckerConfiguration) o;
+        return priority == that.priority &&
+                maxElaborations == that.maxElaborations &&
+                checker.equals(that.checker);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(checker, priority, maxElaborations);
     }
 
     @Override

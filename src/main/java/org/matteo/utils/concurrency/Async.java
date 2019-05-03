@@ -13,15 +13,15 @@ public class Async {
     private Async() {
     }
 
-    public static Future<?> run(Runnable runnable) {
+    public static Future run(Runnable runnable) {
         return run(runnable, null, UUID.randomUUID().toString());
     }
 
-    public static Future<?> run(Runnable runnable, String name) {
+    public static Future run(Runnable runnable, String name) {
         return run(runnable, null, name);
     }
 
-    public static Future<?> run(Runnable runnable, ExceptionHandler exceptionHandler, String name) {
+    public static Future run(Runnable runnable, ExceptionHandler exceptionHandler, String name) {
         final ExecutorService service = Executors.newSingleThreadExecutor(new NamedThreadFactory(name));
         if (exceptionHandler != null) {
             exceptionHandler.register(service, service::shutdownNow);

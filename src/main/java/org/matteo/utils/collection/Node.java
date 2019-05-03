@@ -2,8 +2,9 @@ package org.matteo.utils.collection;
 
 import org.matteo.utils.util.NullSafeComparator;
 
-import java.io.Serializable;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,8 +18,8 @@ public class Node<K extends Comparable<K>, V> {
 
     private V value;
 
-    private transient Node<K, V> parent;
-    private transient TreeMap<K, Node<K, V>> children;
+    private Node<K, V> parent;
+    private TreeMap<K, Node<K, V>> children;
 
     private boolean skipped;
 
@@ -280,30 +281,30 @@ public class Node<K extends Comparable<K>, V> {
 
     public Node<K, V> subTree(int from, int size) {
         Node<K, V> root = cloneNode();
-        List<Node<K, V>> children = getChildrenList();
+        List<Node<K, V>> list = getChildrenList();
         if (from < 0) {
             from = 0;
         }
         int to = from + size;
-        if (to > children.size()) {
-            to = children.size();
+        if (to > list.size()) {
+            to = list.size();
         }
-        root.putNodes(children.subList(from, to));
+        root.putNodes(list.subList(from, to));
         return root;
     }
 
-    public Node<K, V> filteredTree(Filter<Node<K, V>> filter) {
-        return filter(this, this, cloneNode(), filter);
+    public Node<K, V> filteredTree(Predicate<Node<K, V>> predicate) {
+        return filter(this, this, cloneNode(), predicate);
     }
 
-    private Node<K, V> filter(Node<K, V> ancestor, Node<K, V> current, Node<K, V> root, Filter<Node<K, V>> filter) {
+    private Node<K, V> filter(Node<K, V> ancestor, Node<K, V> current, Node<K, V> root, Predicate<Node<K, V>> predicate) {
         for (Node<K, V> node : current.getChildren()) {
-            if (filter.accept(node)) {
+            if (predicate.test(node)) {
                 root.add(node.getBranch(ancestor));
             }
         }
         for (Node<K, V> child : current.getChildren()) {
-            child.filter(ancestor, child, root, filter);
+            child.filter(ancestor, child, root, predicate);
         }
         return root;
     }
@@ -312,17 +313,17 @@ public class Node<K extends Comparable<K>, V> {
         return find(key, this, cloneNode(), tNode -> true);
     }
 
-    public Node<K, V> find(K key, Filter<Node<K, V>> filter) {
-        return find(key, this, cloneNode(), filter);
+    public Node<K, V> find(K key, Predicate<Node<K, V>> predicate) {
+        return find(key, this, cloneNode(), predicate);
     }
 
-    private Node<K, V> find(K key, Node<K, V> current, Node<K, V> root, Filter<Node<K, V>> filter) {
+    private Node<K, V> find(K key, Node<K, V> current, Node<K, V> root, Predicate<Node<K, V>> predicate) {
         Node<K, V> found = current.getChild(key);
-        if (found != null && filter.accept(found)) {
+        if (found != null && predicate.test(found)) {
             root.add(found.getBranch());
         }
         for (Node<K, V> child : current.getChildren()) {
-            child.find(key, child, root, filter);
+            child.find(key, child, root, predicate);
         }
         return root;
     }
@@ -335,45 +336,45 @@ public class Node<K extends Comparable<K>, V> {
         return root;
     }
 
-    public void traverseByDepthTopDown(Action<Node<K, V>> action) {
-        action.execute(this);
+    public void traverseByDepthTopDown(Consumer<Node<K, V>> consumer) {
+        consumer.accept(this);
         for (Node<K, V> child : children.values()) {
-            child.traverseByDepthTopDown(action);
+            child.traverseByDepthTopDown(consumer);
         }
     }
 
-    public void traverseByDepthBottomUp(Action<Node<K, V>> action) {
+    public void traverseByDepthBottomUp(Consumer<Node<K, V>> consumer) {
         for (Node<K, V> child : children.values()) {
-            child.traverseByDepthBottomUp(action);
+            child.traverseByDepthBottomUp(consumer);
         }
-        action.execute(this);
+        consumer.accept(this);
     }
 
-    public void traverseByBreadthTopDown(Action<Node<K, V>> action) {
-        action.execute(this);
-        topDown(children.values(), action);
+    public void traverseByBreadthTopDown(Consumer<Node<K, V>> consumer) {
+        consumer.accept(this);
+        topDown(children.values(), consumer);
     }
 
-    private void topDown(Collection<Node<K, V>> children, Action<Node<K, V>> action) {
+    private void topDown(Collection<Node<K, V>> children, Consumer<Node<K, V>> consumer) {
         for (Node<K, V> child : children) {
-            action.execute(child);
+            consumer.accept(child);
         }
         for (Node<K, V> child : children) {
-            topDown(child.getChildren(), action);
+            topDown(child.getChildren(), consumer);
         }
     }
 
-    public void traverseByBreadthBottomUp(Action<Node<K, V>> action) {
-        bottomUp(children.values(), action);
-        action.execute(this);
+    public void traverseByBreadthBottomUp(Consumer<Node<K, V>> consumer) {
+        bottomUp(children.values(), consumer);
+        consumer.accept(this);
     }
 
-    private void bottomUp(Collection<Node<K, V>> children, Action<Node<K, V>> action) {
+    private void bottomUp(Collection<Node<K, V>> children, Consumer<Node<K, V>> consumer) {
         for (Node<K, V> child : children) {
-            bottomUp(child.getChildren(), action);
+            bottomUp(child.getChildren(), consumer);
         }
         for (Node<K, V> child : children) {
-            action.execute(child);
+            consumer.accept(child);
         }
     }
 
@@ -488,10 +489,10 @@ public class Node<K extends Comparable<K>, V> {
         this.parent = parent;
     }
 
-    public Node<K, V> getAncestor(Filter<Node<K, V>> filter) {
+    public Node<K, V> getAncestor(Predicate<Node<K, V>> filter) {
         Node<K, V> node = this;
         while (node != null) {
-            if (filter.accept(node)) {
+            if (filter.test(node)) {
                 break;
             }
             node = node.getParent();
@@ -560,11 +561,4 @@ public class Node<K extends Comparable<K>, V> {
         return key + (children.isEmpty() ? "" : " -> " + children.values());
     }
 
-    public interface Filter<Node> {
-        boolean accept(Node node);
-    }
-
-    public interface Action<Node> {
-        void execute(Node node);
-    }
 }

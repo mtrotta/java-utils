@@ -17,7 +17,7 @@ import java.util.concurrent.Future;
  */
 public class ExceptionHandler {
 
-    private static final transient Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
     private Exception exception;
     private boolean error;

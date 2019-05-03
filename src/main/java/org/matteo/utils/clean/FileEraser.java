@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -14,7 +16,7 @@ import java.util.regex.Pattern;
 
 public class FileEraser implements Eraser<File> {
 
-    private static final transient Logger LOGGER = LoggerFactory.getLogger(FileEraser.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileEraser.class);
 
     private static final String DATE_FORMAT = "yyyyMMdd";
     private static final String DATE_PATTERN = "(\\\\B|\\\\b)*20[0-9]{2}[01][0-9][0-3][0-9](\\\\B|\\\\b)*";
@@ -38,12 +40,10 @@ public class FileEraser implements Eraser<File> {
     @Override
     public void erase(File file) throws Exception {
         LOGGER.info("Deleting {}", file.getPath());
-        if (!delete(file)) {
-            throw new Exception("Unable to delete file " + file.getAbsolutePath());
-        }
+        delete(file);
     }
 
-    private static boolean delete(File path) {
+    private static void delete(File path) throws IOException {
         if (path.exists()) {
             if (path.isDirectory()) {
                 File[] files = path.listFiles();
@@ -51,15 +51,14 @@ public class FileEraser implements Eraser<File> {
                     for (File file : files) {
                         if (file.isDirectory()) {
                             delete(file);
-                        } else if (!file.delete()) {
-                            return false;
+                        } else {
+                            Files.delete(file.toPath());
                         }
                     }
                 }
             }
-            return path.delete();
+            Files.delete(path.toPath());
         }
-        return false;
     }
 
     @Override
@@ -76,7 +75,7 @@ public class FileEraser implements Eraser<File> {
                     }
                 }
             } else {
-                LOGGER.info("Ignoring path " + path + " since it's a file or it doesn't exist");
+                LOGGER.info("Ignoring path {} since it's a file or it doesn't exist", path);
             }
         }
 
@@ -101,7 +100,7 @@ public class FileEraser implements Eraser<File> {
                     }
                 };
             } catch (ParseException e) {
-                System.out.println("Ignoring file '" + file + "' since it has an invalid date: " + e.getMessage());
+                LOGGER.warn("Ignoring file '{}' since it has an invalid date: {}", file, e.getMessage());
             }
         }
         return null;

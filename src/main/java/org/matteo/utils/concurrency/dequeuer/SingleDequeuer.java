@@ -202,7 +202,8 @@ public class SingleDequeuer<T> implements Dequeuer<T> {
                         }
                     }
                 }
-            } catch (InterruptedException ignore) {
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
             } catch (Exception unhandled) {
                 exceptionHandler.handle(unhandled);
             } finally {

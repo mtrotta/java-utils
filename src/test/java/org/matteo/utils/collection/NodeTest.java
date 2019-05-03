@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,8 +37,8 @@ class NodeTest {
         private final Node<String, NodeType> leaf2 = new Node<>("2_Leaf");
     }
 
-    private Node.Filter<Node<String, NodeType>> filterN1 = n -> NodeType.N1.equals(n.getValue());
-    private Node.Filter<Node<String, NodeType>> filterN2 = n -> NodeType.N2.equals(n.getValue());
+    private Predicate<Node<String, NodeType>> filterN1 = n -> NodeType.N1.equals(n.getValue());
+    private Predicate<Node<String, NodeType>> filterN2 = n -> NodeType.N2.equals(n.getValue());
 
     @Test
     void testBase() {
@@ -488,7 +489,7 @@ class NodeTest {
         Node<String, NodeType> sub1 = new Node<>("sub1", NodeType.N1);
         data.root.replace(sub1);
         Node<String, NodeType> clonedRoot = data.root.cloneTree();
-        assertEquals(clonedRoot.getChild(sub1).getValue(), NodeType.N1);
+        assertEquals(NodeType.N1, clonedRoot.getChild(sub1).getValue());
         assertNotSame(sub1, clonedRoot.getChild(sub1));
     }
 

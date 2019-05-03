@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  */
 public class SingleBalancedDequeuer<T> extends SingleDequeuer<T> {
 
-    private static final transient Logger LOGGER = LoggerFactory.getLogger(SingleBalancedDequeuer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SingleBalancedDequeuer.class);
 
     private final List<BalancedWorker> workers = new ArrayList<>();
 
@@ -43,23 +43,23 @@ public class SingleBalancedDequeuer<T> extends SingleDequeuer<T> {
 
     private volatile double averageWorkTime = CLOCK;
 
-    private final Runnable analyser = new Runnable() {
-        @Override
-        public void run() {
-            try {
-                if (running) {
-                    switch (getWorkerStatus()) {
-                        case INCREASE:
-                            increaseWorkers();
-                            break;
-                        case DECREASE:
-                        case IDLE:
-                            decreaseWorkers();
-                    }
+    private final Runnable analyser = () -> {
+        try {
+            if (running) {
+                switch (getWorkerStatus()) {
+                    case INCREASE:
+                        increaseWorkers();
+                        break;
+                    case DECREASE:
+                    case IDLE:
+                        decreaseWorkers();
+                        break;
+                    default:
+                        break;
                 }
-            } catch (Exception e) {
-                exceptionHandler.handle(e);
             }
+        } catch (Exception e) {
+            exceptionHandler.handle(e);
         }
     };
 
@@ -266,7 +266,11 @@ public class SingleBalancedDequeuer<T> extends SingleDequeuer<T> {
 
     private Integer compare(Long current, Long lower, Long higher) {
         if (higher != null && lower != null) {
-            return higher > lower ? isWorth(higher, current) ? 1 : 0 : lower >= current ? -1 : 0;
+            if (higher > lower) {
+                return isWorth(higher, current) ? 1 : 0;
+            } else {
+                return lower >= current ? -1 : 0;
+            }
         } else if (higher != null) {
             return isWorth(higher, current) ? 1 : -1;
         } else if (lower != null) {
@@ -333,7 +337,7 @@ public class SingleBalancedDequeuer<T> extends SingleDequeuer<T> {
                             processor.process(t);
                             long end = System.nanoTime();
                             feed(1);
-                            double time = end - begin;
+                            long time = end - begin;
                             averageWorkTime = averageWorkTime * profile.low + time * profile.high;
                             if (completeAction != null) {
                                 completeAction.onComplete(t);
@@ -345,7 +349,8 @@ public class SingleBalancedDequeuer<T> extends SingleDequeuer<T> {
                         }
                     }
                 }
-            } catch (InterruptedException ignore) {
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
             } catch (Exception unhandled) {
                 exceptionHandler.handle(unhandled);
             } finally {
