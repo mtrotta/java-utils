@@ -1,7 +1,7 @@
 package org.matteo.utils.concurrency.dequeuer;
 
 import org.matteo.utils.concurrency.Async;
-import org.matteo.utils.exception.ExceptionHandler;
+import org.matteo.utils.concurrency.exception.ExceptionHandler;
 import org.matteo.utils.util.NamedThreadFactory;
 
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.concurrent.*;
  * User: Matteo Trotta
  * Date: 13/07/12
  */
-public class SingleDequeuer<T> implements Dequeuer<T> {
+public class BasicDequeuer<T> implements Dequeuer<T> {
 
     static final TimeUnit UNIT = TimeUnit.NANOSECONDS;
     static final long CLOCK = TimeUnit.SECONDS.toNanos(1);
@@ -36,15 +36,15 @@ public class SingleDequeuer<T> implements Dequeuer<T> {
 
     ExceptionHandler exceptionHandler = new ExceptionHandler();
 
-    public SingleDequeuer(Processor<T> processor) {
+    public BasicDequeuer(Processor<T> processor) {
         this(processor, true, Runtime.getRuntime().availableProcessors());
     }
 
-    public SingleDequeuer(Processor<T> processor, int threads) {
+    public BasicDequeuer(Processor<T> processor, int threads) {
         this(processor, true, threads);
     }
 
-    public SingleDequeuer(Processor<T> processor, boolean synchronous, int threads) {
+    public BasicDequeuer(Processor<T> processor, boolean synchronous, int threads) {
         this(synchronous);
         processors.add(processor);
         for (int i = 0; i < threads; i++) {
@@ -53,7 +53,7 @@ public class SingleDequeuer<T> implements Dequeuer<T> {
         }
     }
 
-    public SingleDequeuer(Collection<? extends Processor<T>> processors, boolean synchronous) {
+    public BasicDequeuer(Collection<? extends Processor<T>> processors, boolean synchronous) {
         this(synchronous);
         for (Processor<T> processor : processors) {
             this.processors.add(processor);
@@ -62,8 +62,8 @@ public class SingleDequeuer<T> implements Dequeuer<T> {
         }
     }
 
-    SingleDequeuer(boolean synchronous) {
-        this.name = "SingleDequeuer";
+    BasicDequeuer(boolean synchronous) {
+        this.name = "BasicDequeuer";
         service = Executors.newCachedThreadPool(new NamedThreadFactory(name));
         queue = getQueue(synchronous);
         exceptionHandler.register(this);

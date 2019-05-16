@@ -1,7 +1,7 @@
 package org.matteo.utils.concurrency.dequeuer;
 
 import org.junit.jupiter.api.Test;
-import org.matteo.utils.exception.ExceptionHandler;
+import org.matteo.utils.concurrency.exception.ExceptionHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * User: Matteo Trotta
  * Date: 02/07/12
  */
-class SingleDequeuerTest {
+class BasicDequeuerTest {
 
     public static class StringProcessor implements Processor<String> {
 
@@ -47,7 +47,7 @@ class SingleDequeuerTest {
     void testQueue() throws Exception {
         int threads = 10;
         StringProcessor processor = new StringProcessor();
-        final Dequeuer<String> dequeuer = new SingleDequeuer<>(processor, false, threads);
+        final Dequeuer<String> dequeuer = new BasicDequeuer<>(processor, false, threads);
         final int num = 1 << 10;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -61,7 +61,7 @@ class SingleDequeuerTest {
     void testQueueTimeout() throws Exception {
         int threads = 10;
         StringProcessor processor = new StringProcessor();
-        final Dequeuer<String> dequeuer = new SingleDequeuer<>(processor, false, threads);
+        final Dequeuer<String> dequeuer = new BasicDequeuer<>(processor, false, threads);
         final int num = 1 << 12;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -78,7 +78,7 @@ class SingleDequeuerTest {
         for (int i = 0; i < threads; i++) {
             processors.add(new StringProcessor());
         }
-        final Dequeuer<String> dequeuer = new SingleDequeuer<>(processors, true);
+        final Dequeuer<String> dequeuer = new BasicDequeuer<>(processors, true);
         final int num = 1 << 14;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -106,7 +106,7 @@ class SingleDequeuerTest {
             public void terminate() {
             }
         };
-        final Dequeuer<String> dequeuer = new SingleDequeuer<>(processor, true, 1);
+        final Dequeuer<String> dequeuer = new BasicDequeuer<>(processor, true, 1);
         final int num = 15;
         try {
             for (int i = 0; i < num; i++) {
@@ -140,7 +140,7 @@ class SingleDequeuerTest {
             public void terminate() {
             }
         };
-        final Dequeuer<String> dequeuer = new SingleDequeuer<>(processor, true, 1);
+        final Dequeuer<String> dequeuer = new BasicDequeuer<>(processor, true, 1);
         ExceptionHandler exceptionHandler = dequeuer.getExceptionHandler();
         exceptionHandler.register(() -> sentinel = true);
         exceptionHandler.register(Exception::printStackTrace);
@@ -175,7 +175,7 @@ class SingleDequeuerTest {
                 terminated = true;
             }
         };
-        final Dequeuer<String> dequeuer = new SingleDequeuer<>(processor, true, 1);
+        final Dequeuer<String> dequeuer = new BasicDequeuer<>(processor, true, 1);
         ExceptionHandler exceptionHandler = dequeuer.getExceptionHandler();
         exceptionHandler.register(() -> sentinel = true);
         exceptionHandler.register(Exception::printStackTrace);

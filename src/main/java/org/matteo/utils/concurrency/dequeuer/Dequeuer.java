@@ -1,7 +1,7 @@
 package org.matteo.utils.concurrency.dequeuer;
 
-import org.matteo.utils.exception.ExceptionHandler;
-import org.matteo.utils.exception.ShutdownAction;
+import org.matteo.utils.concurrency.exception.ExceptionHandler;
+import org.matteo.utils.concurrency.exception.ShutdownAction;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;

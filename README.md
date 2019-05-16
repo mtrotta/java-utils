@@ -16,8 +16,8 @@ For example X yearly elaborations, Y monthly, Z daily etc.
 
 `Dequeuer` is an utility for processing many items using a `BlockingQueue` and multi-threading.
 It has three implementations:
-* `SingleDequeuer` for basic processing with a fixed number of threads
-* `SingleBalancedDequeuer` for processing with a dynamic number of threads based on a rudimentary balancing algorithm
+* `BasicDequeuer` for basic processing with a fixed number of threads
+* `BalancedDequeuer` for processing with a dynamic number of threads based on a rudimentary balancing algorithm
 * `ChainedDequeuer` for processing items in a chain of dequeuers
 
 

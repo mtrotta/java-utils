@@ -1,4 +1,4 @@
-package org.matteo.utils.exception;
+package org.matteo.utils.concurrency.exception;
 
 /**
  * Created with IntelliJ IDEA.

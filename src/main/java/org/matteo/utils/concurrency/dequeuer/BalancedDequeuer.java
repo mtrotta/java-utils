@@ -20,9 +20,9 @@ import java.util.function.Supplier;
  * User: Matteo Trotta
  * Date: 13/07/12
  */
-public class SingleBalancedDequeuer<T> extends SingleDequeuer<T> {
+public class BalancedDequeuer<T> extends BasicDequeuer<T> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SingleBalancedDequeuer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BalancedDequeuer.class);
 
     private final List<BalancedWorker> workers = new ArrayList<>();
 
@@ -63,19 +63,19 @@ public class SingleBalancedDequeuer<T> extends SingleDequeuer<T> {
         }
     };
 
-    public SingleBalancedDequeuer(Processor<T> processor) {
+    public BalancedDequeuer(Processor<T> processor) {
         this(processor, true, DEFAULT_MIN, DEFAULT_MAX);
     }
 
-    public SingleBalancedDequeuer(Processor<T> processor, boolean synchronous) {
+    public BalancedDequeuer(Processor<T> processor, boolean synchronous) {
         this(processor, synchronous, DEFAULT_MIN, DEFAULT_MAX);
     }
 
-    public SingleBalancedDequeuer(final Processor<T> processor, boolean synchronous, int min, int max) {
+    public BalancedDequeuer(final Processor<T> processor, boolean synchronous, int min, int max) {
         this(processor, synchronous, min, max, min);
     }
 
-    public SingleBalancedDequeuer(final Processor<T> processor, boolean synchronous, int min, int max, int initial) {
+    public BalancedDequeuer(final Processor<T> processor, boolean synchronous, int min, int max, int initial) {
         super(synchronous);
         processors.add(processor);
         for (int i = 0; i < max; i++) {
@@ -84,19 +84,19 @@ public class SingleBalancedDequeuer<T> extends SingleDequeuer<T> {
         startBalance(min, max, initial);
     }
 
-    public SingleBalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous) {
+    public BalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous) {
         this(supplier, synchronous, DEFAULT_MIN, DEFAULT_MAX);
     }
 
-    public SingleBalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous, int max) {
+    public BalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous, int max) {
         this(supplier, synchronous, DEFAULT_MIN, max, DEFAULT_MIN);
     }
 
-    public SingleBalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous, int min, int max) {
+    public BalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous, int min, int max) {
         this(supplier, synchronous, min, max, min);
     }
 
-    public SingleBalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous, int min, int max, int initial) {
+    public BalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous, int min, int max, int initial) {
         super(synchronous);
         this.supplier = supplier;
         for (int i = 0; i < initial; i++) {
@@ -105,11 +105,11 @@ public class SingleBalancedDequeuer<T> extends SingleDequeuer<T> {
         startBalance(min, max, initial);
     }
 
-    public SingleBalancedDequeuer(Collection<? extends Processor<T>> processors, boolean synchronous, int min) {
+    public BalancedDequeuer(Collection<? extends Processor<T>> processors, boolean synchronous, int min) {
         this(processors, synchronous, min, min);
     }
 
-    public SingleBalancedDequeuer(Collection<? extends Processor<T>> processors, boolean synchronous, int min, int initial) {
+    public BalancedDequeuer(Collection<? extends Processor<T>> processors, boolean synchronous, int min, int initial) {
         super(synchronous);
         for (Processor<T> processor : processors) {
             this.processors.add(processor);

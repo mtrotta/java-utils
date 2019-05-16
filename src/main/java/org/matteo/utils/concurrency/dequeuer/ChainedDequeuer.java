@@ -1,6 +1,6 @@
 package org.matteo.utils.concurrency.dequeuer;
 
-import org.matteo.utils.exception.ExceptionHandler;
+import org.matteo.utils.concurrency.exception.ExceptionHandler;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,14 +19,14 @@ public class ChainedDequeuer<T> implements Dequeuer<T> {
 
     private final ExceptionHandler exceptionHandler = new ExceptionHandler();
 
-    public ChainedDequeuer(Collection<SingleDequeuer<T>> dequeuers) {
+    public ChainedDequeuer(Collection<BasicDequeuer<T>> dequeuers) {
         if (dequeuers.isEmpty()) {
             throw new IllegalArgumentException("An empty chained dequeuer doesn't make sense");
         }
-        Iterator<SingleDequeuer<T>> iterator = dequeuers.iterator();
-        SingleDequeuer<T> previous = null;
+        Iterator<BasicDequeuer<T>> iterator = dequeuers.iterator();
+        BasicDequeuer<T> previous = null;
         while (iterator.hasNext()) {
-            SingleDequeuer<T> next = iterator.next();
+            BasicDequeuer<T> next = iterator.next();
             next.setExceptionHandler(exceptionHandler);
             chain.add(next);
             if (previous != null) {

@@ -1,4 +1,4 @@
-package org.matteo.utils.exception;
+package org.matteo.utils.concurrency.exception;
 
 import org.matteo.utils.concurrency.Async;
 import org.slf4j.Logger;

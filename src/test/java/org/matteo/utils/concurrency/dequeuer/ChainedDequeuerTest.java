@@ -1,7 +1,7 @@
 package org.matteo.utils.concurrency.dequeuer;
 
 import org.junit.jupiter.api.Test;
-import org.matteo.utils.exception.ExceptionHandler;
+import org.matteo.utils.concurrency.exception.ExceptionHandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +26,7 @@ class ChainedDequeuerTest {
     @Test
     void testSingle() throws Exception {
         Dequeuer<String> dequeuer = new ChainedDequeuer<>(Collections.singletonList(
-                new SingleDequeuer<>(new FakeProcessor())));
+                new BasicDequeuer<>(new FakeProcessor())));
         dequeuer.enqueue("1");
         dequeuer.shutdown();
         dequeuer.awaitTermination(1, TimeUnit.HOURS);
@@ -42,8 +42,8 @@ class ChainedDequeuerTest {
             FakeProcessor processor1 = new FakeProcessor();
             FakeProcessor processor2 = new FakeProcessor();
 
-            final SingleDequeuer<String> dequeuer1 = new SingleDequeuer<>(processor1, threads);
-            final SingleDequeuer<String> dequeuer2 = new SingleDequeuer<>(processor2, threads);
+            final BasicDequeuer<String> dequeuer1 = new BasicDequeuer<>(processor1, threads);
+            final BasicDequeuer<String> dequeuer2 = new BasicDequeuer<>(processor2, threads);
 
             final Dequeuer<String> chainedDequeuer = new ChainedDequeuer<>(Arrays.asList(dequeuer1, dequeuer2));
 
@@ -91,10 +91,10 @@ class ChainedDequeuerTest {
     @Test
     void testChainedQueueBadProcessor() throws Exception {
         ConditionalBadProcessor processorSuccess = new ConditionalBadProcessor(false);
-        final SingleDequeuer<String> dequeuer1 = new SingleDequeuer<>(processorSuccess, 1);
+        final BasicDequeuer<String> dequeuer1 = new BasicDequeuer<>(processorSuccess, 1);
 
         ConditionalBadProcessor processorFail = new ConditionalBadProcessor(true);
-        final SingleDequeuer<String> dequeuer2 = new SingleDequeuer<>(processorFail, 1);
+        final BasicDequeuer<String> dequeuer2 = new BasicDequeuer<>(processorFail, 1);
 
         final ChainedDequeuer<String> chainedDequeuer = new ChainedDequeuer<>(Arrays.asList(dequeuer1, dequeuer2));
 
@@ -135,7 +135,7 @@ class ChainedDequeuerTest {
             public void terminate() {
             }
         };
-        final SingleDequeuer<String> dequeuer = new SingleDequeuer<>(processor, true, 1);
+        final BasicDequeuer<String> dequeuer = new BasicDequeuer<>(processor, true, 1);
         ExceptionHandler exceptionHandler = dequeuer.getExceptionHandler();
         exceptionHandler.register(() -> sentinel = true);
         dequeuer.enqueue("A");

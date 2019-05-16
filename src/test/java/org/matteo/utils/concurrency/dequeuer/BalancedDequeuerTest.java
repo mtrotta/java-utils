@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
  * User: Matteo Trotta
  * Date: 02/07/12
  */
-class SingleBalancedDequeuerTest {
+class BalancedDequeuerTest {
 
     public static class StringProcessor implements Processor<String> {
 
@@ -102,7 +102,7 @@ class SingleBalancedDequeuerTest {
     @Test
     void testBalanceSingleProcessor() throws Exception {
         long begin = System.currentTimeMillis();
-        final Dequeuer<String> dequeuer = new SingleBalancedDequeuer<>(new StringProcessor(), true, 1, 20, 1);
+        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(new StringProcessor(), true, 1, 20, 1);
         final int num = 15000;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -116,7 +116,7 @@ class SingleBalancedDequeuerTest {
 
     @Test
     void testBalanceFactory() throws Exception {
-        final Dequeuer<String> dequeuer = new SingleBalancedDequeuer<>(StringProcessor::new, false, 1, 20, 20);
+        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(StringProcessor::new, false, 1, 20, 20);
         final int num = 50000;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -151,7 +151,7 @@ class SingleBalancedDequeuerTest {
 
     @Test
     void testBalanceFactoryMin() throws Exception {
-        final Dequeuer<String> dequeuer = new SingleBalancedDequeuer<>(ThreadUnsafeProcessor::new, false, 1, 5, 1);
+        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(ThreadUnsafeProcessor::new, false, 1, 5, 1);
         final long num = 1 << 22;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -172,8 +172,8 @@ class SingleBalancedDequeuerTest {
         for (int i = 0; i < 20; i++) {
             processors.add(new StupidProcessor(Integer.toString(i)));
         }
-        final SingleBalancedDequeuer<String> dequeuer = new SingleBalancedDequeuer<>(processors, false, 1, 1);
-        dequeuer.setProfile(SingleBalancedDequeuer.Profile.FAST);
+        final BalancedDequeuer<String> dequeuer = new BalancedDequeuer<>(processors, false, 1, 1);
+        dequeuer.setProfile(BalancedDequeuer.Profile.FAST);
         final int num = 1 << 20;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -188,8 +188,8 @@ class SingleBalancedDequeuerTest {
         for (int i = 0; i < 20; i++) {
             processors.add(new SmartProcessor(Integer.toString(i)));
         }
-        final SingleBalancedDequeuer<Collection<String>> dequeuer = new SingleBalancedDequeuer<>(processors, true, 1, 1);
-        SingleBalancedDequeuer.Profile profile = SingleBalancedDequeuer.Profile.FAST;
+        final BalancedDequeuer<Collection<String>> dequeuer = new BalancedDequeuer<>(processors, true, 1, 1);
+        BalancedDequeuer.Profile profile = BalancedDequeuer.Profile.FAST;
         dequeuer.setProfile(profile);
         final int num = 1 << 24;
         List<String> list = new ArrayList<>();
@@ -219,8 +219,8 @@ class SingleBalancedDequeuerTest {
 
             }
         };
-        final SingleBalancedDequeuer<String> dequeuer = new SingleBalancedDequeuer<>(supplier, true, 1, 10, 1);
-        dequeuer.setProfile(SingleBalancedDequeuer.Profile.SLOW);
+        final BalancedDequeuer<String> dequeuer = new BalancedDequeuer<>(supplier, true, 1, 10, 1);
+        dequeuer.setProfile(BalancedDequeuer.Profile.SLOW);
         final long num = 1 << 23;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(Math.random()));
@@ -241,7 +241,7 @@ class SingleBalancedDequeuerTest {
             public void terminate() {
             }
         };
-        final Dequeuer<String> dequeuer = new SingleBalancedDequeuer<>(supplier, true, 1, 10, 1);
+        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(supplier, true, 1, 10, 1);
         final long num = 1 << 23;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(Math.random()));
@@ -266,7 +266,7 @@ class SingleBalancedDequeuerTest {
             public void terminate() {
             }
         };
-        final Dequeuer<String> dequeuer = new SingleBalancedDequeuer<>(processor);
+        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(processor);
         final int num = 15;
         try {
             for (int i = 0; i < num; i++) {
