@@ -21,8 +21,6 @@ public class Node<K extends Comparable<K>, V> {
     private Node<K, V> parent;
     private TreeMap<K, Node<K, V>> children;
 
-    private boolean skipped;
-
     public Node() {
         this(new NullSafeComparator<>());
     }
@@ -52,7 +50,6 @@ public class Node<K extends Comparable<K>, V> {
 
     public Node(Node<K, V> node) {
         this(node.key, node.value, node.comparator);
-        skipped = node.skipped;
     }
 
     private void putNode(Node<K, V> child) {
@@ -96,16 +93,15 @@ public class Node<K extends Comparable<K>, V> {
     }
 
     public Node<K, V> addSkipEmpty(Node<K, V> child) {
-        Node<K, V> node = child;
-        if (!child.isEmpty() && !skipped) {
-            node = addNode(child);
+        if (!child.isEmpty()) {
+            Node<K, V> node = addNode(child);
             for (Node<K, V> c : child.getChildren()) {
                 node.addSkipEmpty(c);
             }
+            return node;
         } else {
-            node.skipped = true;
+            return new Node<>();
         }
-        return node;
     }
 
     public Node<K, V> addTo(Node<K, V> parent) {
@@ -158,16 +154,15 @@ public class Node<K extends Comparable<K>, V> {
     }
 
     public Node<K, V> replaceSkipEmpty(Node<K, V> child) {
-        Node<K, V> node = child;
-        if (!child.isEmpty() && !skipped) {
-            node = replace(child);
+        if (!child.isEmpty()) {
+            Node<K, V> node = replace(child);
             for (Node<K, V> c : child.getChildren()) {
                 node.replaceSkipEmpty(c);
             }
+            return node;
         } else {
-            node.skipped = true;
+            return new Node<>();
         }
-        return node;
     }
 
     public Node<K, V> replaceTo(Node<K, V> parent) {
@@ -526,7 +521,6 @@ public class Node<K extends Comparable<K>, V> {
 
     public void clear() {
         parent = null;
-        skipped = false;
         children.clear();
     }
 
@@ -540,7 +534,6 @@ public class Node<K extends Comparable<K>, V> {
         clearBranch();
         clear();
     }
-
 
     @Override
     public boolean equals(Object o) {
