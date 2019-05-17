@@ -69,9 +69,12 @@ public class FileEraser implements Eraser<File> {
             if (folder.isDirectory()) {
                 File[] files = folder.listFiles();
                 if (files != null && files.length > 0) {
-                    LOGGER.info("Analysing folder {} ({} elements, )", folder.getPath(), files.length);
+                    LOGGER.info("Analysing folder {} ({} elements)", folder.getPath(), files.length);
                     for (final File file : files) {
-                        deletables.add(getDeletable(file));
+                        Deletable<File> deletable = getDeletable(file);
+                        if (deletable != null) {
+                            deletables.add(deletable);
+                        }
                     }
                 }
             } else {
