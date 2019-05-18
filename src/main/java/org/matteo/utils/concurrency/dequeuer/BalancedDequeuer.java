@@ -13,7 +13,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 /**
  * Created with IntelliJ IDEA.
@@ -25,8 +24,6 @@ public class BalancedDequeuer<T> extends BasicDequeuer<T> {
     private static final Logger LOGGER = LoggerFactory.getLogger(BalancedDequeuer.class);
 
     private final List<BalancedWorker> workers = new ArrayList<>();
-
-    private Supplier<? extends Processor<T>> supplier;
 
     private volatile boolean running;
 
@@ -84,27 +81,6 @@ public class BalancedDequeuer<T> extends BasicDequeuer<T> {
         startBalance(min, max, initial);
     }
 
-    public BalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous) {
-        this(supplier, synchronous, DEFAULT_MIN, DEFAULT_MAX);
-    }
-
-    public BalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous, int max) {
-        this(supplier, synchronous, DEFAULT_MIN, max, DEFAULT_MIN);
-    }
-
-    public BalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous, int min, int max) {
-        this(supplier, synchronous, min, max, min);
-    }
-
-    public BalancedDequeuer(final Supplier<? extends Processor<T>> supplier, boolean synchronous, int min, int max, int initial) {
-        super(synchronous);
-        this.supplier = supplier;
-        for (int i = 0; i < initial; i++) {
-            addProcessor();
-        }
-        startBalance(min, max, initial);
-    }
-
     public BalancedDequeuer(Collection<? extends Processor<T>> processors, boolean synchronous, int min) {
         this(processors, synchronous, min, min);
     }
@@ -116,12 +92,6 @@ public class BalancedDequeuer<T> extends BasicDequeuer<T> {
             addWorker(processor);
         }
         startBalance(min, processors.size(), initial);
-    }
-
-    private void addProcessor() {
-        Processor<T> processor = supplier.get();
-        processors.add(processor);
-        addWorker(processor);
     }
 
     private void addWorker(Processor<T> processor) {
@@ -196,9 +166,6 @@ public class BalancedDequeuer<T> extends BasicDequeuer<T> {
         try {
             final int num = numWorkers.get();
             if (num < maxWorkers) {
-                if (workers.size() <= num) {
-                    addProcessor();
-                }
                 BalancedWorker worker = workers.get(numWorkers.getAndIncrement());
                 startWorker(worker);
             }

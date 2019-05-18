@@ -21,10 +21,6 @@ class BasicDequeuerTest {
 
         private final AtomicInteger ctr = new AtomicInteger();
 
-        StringProcessor() {
-            System.out.println("Created single processor");
-        }
-
         @Override
         public void process(String s) {
             try {
@@ -35,11 +31,6 @@ class BasicDequeuerTest {
                 e.printStackTrace();
             }
             ctr.incrementAndGet();
-        }
-
-        @Override
-        public void terminate() {
-            System.out.println("Terminated single processor");
         }
     }
 
@@ -95,16 +86,9 @@ class BasicDequeuerTest {
     @Test
     void testQueueBadProcessor() throws Exception {
         final AtomicInteger ctr = new AtomicInteger();
-        Processor<String> processor = new Processor<String>() {
-            @Override
-            public void process(String s) {
-                ctr.incrementAndGet();
-                throw SIMULATED_EXCEPTION;
-            }
-
-            @Override
-            public void terminate() {
-            }
+        Processor<String> processor = s -> {
+            ctr.incrementAndGet();
+            throw SIMULATED_EXCEPTION;
         };
         final Dequeuer<String> dequeuer = new BasicDequeuer<>(processor, true, 1);
         final int num = 15;
@@ -127,17 +111,10 @@ class BasicDequeuerTest {
     @Test
     void testQueueBadProcessorWithShutdownAction() throws Exception {
         final AtomicInteger ctr = new AtomicInteger();
-        Processor<String> processor = new Processor<String>() {
-            @Override
-            public void process(String s) throws Exception {
-                ctr.incrementAndGet();
-                Thread.sleep(1000);
-                throw SIMULATED_EXCEPTION;
-            }
-
-            @Override
-            public void terminate() {
-            }
+        Processor<String> processor = s -> {
+            ctr.incrementAndGet();
+            Thread.sleep(1000);
+            throw SIMULATED_EXCEPTION;
         };
         final Dequeuer<String> dequeuer = new BasicDequeuer<>(processor, true, 1);
         ExceptionHandler exceptionHandler = dequeuer.getExceptionHandler();
@@ -156,22 +133,12 @@ class BasicDequeuerTest {
         assertTrue(sentinel);
     }
 
-    private boolean terminated = false;
-
     @Test
     void testQueueBadProcessorWithShutdownActionTerminate() {
         final AtomicInteger ctr = new AtomicInteger();
-        Processor<String> processor = new Processor<String>() {
-            @Override
-            public void process(String s) {
-                ctr.incrementAndGet();
-                throw SIMULATED_EXCEPTION;
-            }
-
-            @Override
-            public void terminate() {
-                terminated = true;
-            }
+        Processor<String> processor = s -> {
+            ctr.incrementAndGet();
+            throw SIMULATED_EXCEPTION;
         };
         final Dequeuer<String> dequeuer = new BasicDequeuer<>(processor, true, 1);
         ExceptionHandler exceptionHandler = dequeuer.getExceptionHandler();
@@ -191,7 +158,6 @@ class BasicDequeuerTest {
         assertTrue(dequeuer.isTerminated());
         assertSame(SIMULATED_EXCEPTION, dequeuer.getExceptionHandler().getException());
         assertTrue(sentinel);
-        assertTrue(terminated);
     }
 
 }

@@ -82,10 +82,6 @@ class ChainedDequeuerTest {
                 throw SIMULATED_EXCEPTION;
             }
         }
-
-        @Override
-        public void terminate() {
-        }
     }
 
     @Test
@@ -121,16 +117,9 @@ class ChainedDequeuerTest {
     @Test
     void testChainedQueueBadProcessorWithShutdownAction() throws Exception {
         final AtomicInteger ctr = new AtomicInteger();
-        Processor<String> processor = new Processor<String>() {
-            @Override
-            public void process(String s) {
-                ctr.incrementAndGet();
-                throw SIMULATED_EXCEPTION;
-            }
-
-            @Override
-            public void terminate() {
-            }
+        Processor<String> processor = s -> {
+            ctr.incrementAndGet();
+            throw SIMULATED_EXCEPTION;
         };
         final BasicDequeuer<String> dequeuer = new BasicDequeuer<>(processor, true, 1);
         ExceptionHandler exceptionHandler = dequeuer.getExceptionHandler();
@@ -157,11 +146,6 @@ class ChainedDequeuerTest {
             synchronized (this) {
                 ctr++;
             }
-        }
-
-        @Override
-        public void terminate() {
-
         }
     }
 

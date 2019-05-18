@@ -9,10 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * Created with IntelliJ IDEA.
@@ -24,10 +22,6 @@ class BalancedDequeuerTest {
     public static class StringProcessor implements Processor<String> {
 
         private final AtomicInteger ctr = new AtomicInteger();
-
-        StringProcessor() {
-            System.out.println("Created single processor");
-        }
 
         @Override
         public void process(String s) {
@@ -41,21 +35,11 @@ class BalancedDequeuerTest {
             ctr.incrementAndGet();
         }
 
-        @Override
-        public void terminate() {
-            System.out.println("Terminated single processor");
-        }
     }
 
     public static class StupidProcessor implements Processor<String> {
 
         private final AtomicInteger ctr = new AtomicInteger();
-
-        private final String name;
-
-        StupidProcessor(String name) {
-            this.name = name;
-        }
 
         @Override
         public void process(String s) {
@@ -66,20 +50,9 @@ class BalancedDequeuerTest {
             }
         }
 
-        @Override
-        public void terminate() {
-            System.out.println("Terminated " + name);
-        }
     }
 
     public static class SmartProcessor implements Processor<Collection<String>> {
-
-        private final String name;
-
-        SmartProcessor(String name) {
-            this.name = name;
-            System.out.println("Created " + name);
-        }
 
         @Override
         public void process(Collection<String> strings) {
@@ -93,10 +66,6 @@ class BalancedDequeuerTest {
             }
         }
 
-        @Override
-        public void terminate() {
-            System.out.println("Terminated " + name);
-        }
     }
 
     @Test
@@ -115,8 +84,12 @@ class BalancedDequeuerTest {
     }
 
     @Test
-    void testBalanceFactory() throws Exception {
-        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(StringProcessor::new, false, 1, 20, 20);
+    void testBalance() throws Exception {
+        List<StringProcessor> processors = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            processors.add(new StringProcessor());
+        }
+        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(processors, false, 1, 20);
         final int num = 50000;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -130,10 +103,6 @@ class BalancedDequeuerTest {
 
         private final Collection<String> collection = new HashSet<>(1);
 
-        ThreadUnsafeProcessor() {
-            System.out.println("Created");
-        }
-
         @Override
         public void process(String string) throws Exception {
             collection.add(string);
@@ -142,16 +111,15 @@ class BalancedDequeuerTest {
             }
             collection.remove(string);
         }
-
-        @Override
-        public void terminate() {
-            System.out.println("Terminated");
-        }
     }
 
     @Test
-    void testBalanceFactoryMin() throws Exception {
-        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(ThreadUnsafeProcessor::new, false, 1, 5, 1);
+    void testBalanceMin() throws Exception {
+        List<ThreadUnsafeProcessor> processors = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            processors.add(new ThreadUnsafeProcessor());
+        }
+        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(processors, false, 1, 1);
         final long num = 1 << 22;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
@@ -170,7 +138,7 @@ class BalancedDequeuerTest {
     void testBalanceStupid() throws Exception {
         List<StupidProcessor> processors = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
-            processors.add(new StupidProcessor(Integer.toString(i)));
+            processors.add(new StupidProcessor());
         }
         final BalancedDequeuer<String> dequeuer = new BalancedDequeuer<>(processors, false, 1, 1);
         dequeuer.setProfile(BalancedDequeuer.Profile.FAST);
@@ -186,7 +154,7 @@ class BalancedDequeuerTest {
     void testBalanceSmart() throws Exception {
         List<SmartProcessor> processors = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
-            processors.add(new SmartProcessor(Integer.toString(i)));
+            processors.add(new SmartProcessor());
         }
         final BalancedDequeuer<Collection<String>> dequeuer = new BalancedDequeuer<>(processors, true, 1, 1);
         BalancedDequeuer.Profile profile = BalancedDequeuer.Profile.FAST;
@@ -207,19 +175,16 @@ class BalancedDequeuerTest {
 
     @Test
     void testBalanceBigDecimal() throws Exception {
-        Supplier<Processor<String>> supplier = () -> new Processor<String>() {
-            @Override
-            public void process(String s) {
-                BigDecimal bigDecimal = new BigDecimal(s);
-                double d = bigDecimal.doubleValue();
-            }
-
-            @Override
-            public void terminate() {
-
-            }
-        };
-        final BalancedDequeuer<String> dequeuer = new BalancedDequeuer<>(supplier, true, 1, 10, 1);
+        Processor<String> processor =
+                s -> {
+                    BigDecimal bigDecimal = new BigDecimal(s);
+                    double d = bigDecimal.doubleValue();
+                };
+        List<Processor<String>> processors = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            processors.add(processor);
+        }
+        final BalancedDequeuer<String> dequeuer = new BalancedDequeuer<>(processors, true, 1, 1);
         dequeuer.setProfile(BalancedDequeuer.Profile.SLOW);
         final long num = 1 << 23;
         for (long i = 0; i < num; i++) {
@@ -231,17 +196,14 @@ class BalancedDequeuerTest {
 
     @Test
     void testBalanceDouble() throws Exception {
-        Supplier<Processor<String>> supplier = () -> new Processor<String>() {
-            @Override
-            public void process(String s) {
-                Double d = Double.parseDouble(s);
-            }
-
-            @Override
-            public void terminate() {
-            }
+        Processor<String> processor = s -> {
+            Double d = Double.parseDouble(s);
         };
-        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(supplier, true, 1, 10, 1);
+        List<Processor<String>> processors = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            processors.add(processor);
+        }
+        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(processors, true, 1, 1);
         final long num = 1 << 23;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(Math.random()));
@@ -255,16 +217,9 @@ class BalancedDequeuerTest {
     @Test
     void testQueueBadProcessor() throws Exception {
         final AtomicInteger ctr = new AtomicInteger();
-        Processor<String> processor = new Processor<String>() {
-            @Override
-            public void process(String s) {
-                ctr.incrementAndGet();
-                throw SIMULATED_EXCEPTION;
-            }
-
-            @Override
-            public void terminate() {
-            }
+        Processor<String> processor = s -> {
+            ctr.incrementAndGet();
+            throw SIMULATED_EXCEPTION;
         };
         final Dequeuer<String> dequeuer = new BalancedDequeuer<>(processor);
         final int num = 15;

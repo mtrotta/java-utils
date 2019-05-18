@@ -142,13 +142,6 @@ public class BasicDequeuer<T> implements Dequeuer<T> {
     private synchronized void terminate() {
         if (!terminated) {
             terminated = true;
-            for (Processor<T> processor : processors) {
-                try {
-                    processor.terminate();
-                } catch (Exception e) {
-                    exceptionHandler.handle(e);
-                }
-            }
             exceptionHandler.remove(this);
         }
     }
