@@ -2,7 +2,7 @@ package org.matteo.utils.concurrency.dequeuer;
 
 import org.matteo.utils.concurrency.Async;
 import org.matteo.utils.concurrency.exception.ExceptionHandler;
-import org.matteo.utils.util.NamedThreadFactory;
+import org.matteo.utils.concurrency.NamedThreadFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -128,11 +128,6 @@ public class BasicDequeuer<T> implements Dequeuer<T> {
     @Override
     public boolean isTerminated() {
         return terminated;
-    }
-
-    @Override
-    public boolean isAborted() {
-        return exceptionHandler.isExhausted();
     }
 
     @Override

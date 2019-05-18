@@ -282,8 +282,6 @@ class BalancedDequeuerTest {
         }
         assertEquals(1, ctr.get());
         assertTrue(dequeuer.isTerminated());
-        assertTrue(dequeuer.isAborted());
     }
-
 
 }

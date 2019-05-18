@@ -113,10 +113,7 @@ class ChainedDequeuerTest {
         assertTrue(processorSuccess.ctr.get() > 0);
         assertEquals(1, processorFail.ctr.get());
         assertTrue(chainedDequeuer.isTerminated());
-        assertTrue(chainedDequeuer.isAborted());
-        assertTrue(dequeuer1.isAborted());
         assertTrue(dequeuer1.isTerminated());
-        assertTrue(dequeuer2.isAborted());
         assertTrue(dequeuer2.isTerminated());
         assertSame(SIMULATED_EXCEPTION, dequeuer2.getExceptionHandler().getException());
     }
@@ -147,7 +144,6 @@ class ChainedDequeuerTest {
         assertEquals(1, ctr.get());
         assertEquals(0, dequeuer.getUnprocessed().size());
         assertTrue(dequeuer.isTerminated());
-        assertTrue(dequeuer.isAborted());
         assertSame(SIMULATED_EXCEPTION, exceptionHandler.getException());
         assertTrue(sentinel);
     }

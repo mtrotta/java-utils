@@ -1,4 +1,4 @@
-package org.matteo.utils.util;
+package org.matteo.utils.concurrency;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

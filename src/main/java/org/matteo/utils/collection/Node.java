@@ -1,7 +1,5 @@
 package org.matteo.utils.collection;
 
-import org.matteo.utils.util.NullSafeComparator;
-
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -552,6 +550,21 @@ public class Node<K extends Comparable<K>, V> {
     @Override
     public String toString() {
         return key + (children.isEmpty() ? "" : " -> " + children.values());
+    }
+
+}
+
+class NullSafeComparator<T extends Comparable<T>> implements Comparator<T> {
+
+    public int compare(T t1, T t2) {
+        if (t1 != null && t2 != null) {
+            return t1.compareTo(t2);
+        } else if (t1 != null) {
+            return 1;
+        } else if (t2 != null) {
+            return -1;
+        }
+        return 0;
     }
 
 }

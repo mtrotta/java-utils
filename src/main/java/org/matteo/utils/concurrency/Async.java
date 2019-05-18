@@ -1,7 +1,6 @@
 package org.matteo.utils.concurrency;
 
 import org.matteo.utils.concurrency.exception.ExceptionHandler;
-import org.matteo.utils.util.NamedThreadFactory;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;

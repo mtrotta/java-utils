@@ -1,6 +1,6 @@
 package org.matteo.utils.concurrency.dequeuer;
 
-import org.matteo.utils.util.NamedThreadFactory;
+import org.matteo.utils.concurrency.NamedThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

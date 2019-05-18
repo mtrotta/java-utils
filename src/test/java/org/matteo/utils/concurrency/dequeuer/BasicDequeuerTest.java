@@ -122,7 +122,6 @@ class BasicDequeuerTest {
         }
         assertEquals(1, ctr.get());
         assertTrue(dequeuer.isTerminated());
-        assertTrue(dequeuer.isAborted());
     }
 
     @Test
@@ -153,7 +152,6 @@ class BasicDequeuerTest {
         assertEquals(1, ctr.get());
         assertEquals(0, dequeuer.getUnprocessed().size());
         assertTrue(dequeuer.isTerminated());
-        assertTrue(dequeuer.isAborted());
         assertSame(SIMULATED_EXCEPTION, dequeuer.getExceptionHandler().getException());
         assertTrue(sentinel);
     }
@@ -191,7 +189,6 @@ class BasicDequeuerTest {
             e.printStackTrace();
         }
         assertTrue(dequeuer.isTerminated());
-        assertTrue(dequeuer.isAborted());
         assertSame(SIMULATED_EXCEPTION, dequeuer.getExceptionHandler().getException());
         assertTrue(sentinel);
         assertTrue(terminated);

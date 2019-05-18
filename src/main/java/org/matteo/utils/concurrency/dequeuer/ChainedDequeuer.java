@@ -76,15 +76,6 @@ public class ChainedDequeuer<T> implements Dequeuer<T> {
     }
 
     @Override
-    public boolean isAborted() {
-        boolean aborted = false;
-        for (Dequeuer<T> dequeuer : chain) {
-            aborted |= dequeuer.isAborted();
-        }
-        return aborted;
-    }
-
-    @Override
     public void enqueue(T t) throws RejectedObjectException, InterruptedException {
         chain.getFirst().enqueue(t);
     }

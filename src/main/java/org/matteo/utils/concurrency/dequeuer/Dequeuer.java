@@ -18,8 +18,6 @@ public interface Dequeuer<T> extends ShutdownAction {
 
     boolean isTerminated();
 
-    boolean isAborted();
-
     ExceptionHandler getExceptionHandler();
 
 }
