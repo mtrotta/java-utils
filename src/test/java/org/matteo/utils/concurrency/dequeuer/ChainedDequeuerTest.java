@@ -57,8 +57,8 @@ class ChainedDequeuerTest {
 
             assertTrue(chainedDequeuer.isTerminated());
 
-            assertEquals(num, processor1.ctr);
-            assertEquals(num, processor2.ctr);
+            assertEquals(num, processor1.ctr.get());
+            assertEquals(num, processor2.ctr.get());
         }
     }
 
@@ -94,6 +94,9 @@ class ChainedDequeuerTest {
 
         final ChainedDequeuer<String> chainedDequeuer = new ChainedDequeuer<>(Arrays.asList(dequeuer1, dequeuer2));
 
+        ExceptionHandler exceptionHandler = chainedDequeuer.getExceptionHandler();
+        exceptionHandler.register(() -> sentinel = true);
+
         final int num = 15;
         try {
             for (int i = 0; i < num; i++) {
@@ -112,40 +115,16 @@ class ChainedDequeuerTest {
         assertTrue(dequeuer1.isTerminated());
         assertTrue(dequeuer2.isTerminated());
         assertSame(SIMULATED_EXCEPTION, dequeuer2.getExceptionHandler().getException());
-    }
-
-    @Test
-    void testChainedQueueBadProcessorWithShutdownAction() throws Exception {
-        final AtomicInteger ctr = new AtomicInteger();
-        Processor<String> processor = s -> {
-            ctr.incrementAndGet();
-            throw SIMULATED_EXCEPTION;
-        };
-        final BasicDequeuer<String> dequeuer = new BasicDequeuer<>(processor, true, 1);
-        ExceptionHandler exceptionHandler = dequeuer.getExceptionHandler();
-        exceptionHandler.register(() -> sentinel = true);
-        dequeuer.enqueue("A");
-        try {
-            dequeuer.awaitTermination(1, TimeUnit.HOURS);
-        } catch (Exception e) {
-            assertSame(SIMULATED_EXCEPTION, e);
-        }
-        assertEquals(1, ctr.get());
-        assertEquals(0, dequeuer.getUnprocessed().size());
-        assertTrue(dequeuer.isTerminated());
-        assertSame(SIMULATED_EXCEPTION, exceptionHandler.getException());
         assertTrue(sentinel);
     }
 
     private class FakeProcessor implements Processor<String> {
-        volatile int ctr = 0;
+        AtomicInteger ctr = new AtomicInteger();
 
         @Override
         public void process(String s) throws Exception {
             Thread.sleep(1);
-            synchronized (this) {
-                ctr++;
-            }
+            ctr.incrementAndGet();
         }
     }
 

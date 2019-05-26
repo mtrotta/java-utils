@@ -89,8 +89,8 @@ class BalancedDequeuerTest {
         for (int i = 0; i < 20; i++) {
             processors.add(new StringProcessor());
         }
-        final Dequeuer<String> dequeuer = new BalancedDequeuer<>(processors, false, 1, 20);
-        final int num = 50000;
+        final BalancedDequeuer<String> dequeuer = new BalancedDequeuer<>(processors, false, 1, 20);
+        final int num = 1 << 20;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
         }

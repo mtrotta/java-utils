@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -25,12 +24,10 @@ public class BalancedDequeuer<T> extends BasicDequeuer<T> {
 
     private final List<BalancedWorker> workers = new ArrayList<>();
 
-    private volatile boolean running;
-
     private int minWorkers;
     private int maxWorkers;
     private AtomicInteger numWorkers;
-    private ScheduledExecutorService scheduledExecutorService;
+    private ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("DequeuerBalancer"));
     private final TreeMap<Integer, Long> reference = new TreeMap<>();
 
     private Profile profile = Profile.MEDIUM;
@@ -42,18 +39,16 @@ public class BalancedDequeuer<T> extends BasicDequeuer<T> {
 
     private final Runnable analyser = () -> {
         try {
-            if (running) {
-                switch (getWorkerStatus()) {
-                    case INCREASE:
-                        increaseWorkers();
-                        break;
-                    case DECREASE:
-                    case IDLE:
-                        decreaseWorkers();
-                        break;
-                    default:
-                        break;
-                }
+            switch (getWorkerStatus()) {
+                case INCREASE:
+                    increaseWorkers();
+                    break;
+                case DECREASE:
+                case IDLE:
+                    decreaseWorkers();
+                    break;
+                default:
+                    break;
             }
         } catch (Exception e) {
             exceptionHandler.handle(e);
@@ -99,24 +94,10 @@ public class BalancedDequeuer<T> extends BasicDequeuer<T> {
         workers.add(worker);
     }
 
-
-    private void stopBalance() {
-        running = false;
-        if (scheduledExecutorService != null) {
-            scheduledExecutorService.shutdownNow();
-        }
-    }
-
     @Override
-    public synchronized void shutdownNow() {
-        stopBalance();
-        super.shutdownNow();
-    }
-
-    @Override
-    public boolean awaitTermination(long time, TimeUnit unit) throws Exception {
-        stopBalance();
-        return super.awaitTermination(time, unit);
+    protected synchronized void terminate() {
+        super.terminate();
+        scheduledExecutorService.shutdownNow();
     }
 
     private enum WorkerStatus {
@@ -157,8 +138,6 @@ public class BalancedDequeuer<T> extends BasicDequeuer<T> {
         for (int i = 0; i < initial; i++) {
             startWorker(workers.get(i));
         }
-        running = true;
-        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("DequeuerBalancer"));
         scheduledExecutorService.schedule(analyser, profile.period * CLOCK, UNIT);
     }
 
@@ -336,13 +315,9 @@ public class BalancedDequeuer<T> extends BasicDequeuer<T> {
 
         long getProcessed() {
             long processed = ctr.get();
-            reset();
-            return processed;
-        }
-
-        void reset() {
             ctr.set(0);
             observable = false;
+            return processed;
         }
 
         void shutdown() {

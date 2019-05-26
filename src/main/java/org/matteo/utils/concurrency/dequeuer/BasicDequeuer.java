@@ -139,7 +139,7 @@ public class BasicDequeuer<T> implements Dequeuer<T> {
         } while (!queue.offer(t, CLOCK, UNIT));
     }
 
-    private synchronized void terminate() {
+    protected synchronized void terminate() {
         if (!terminated) {
             terminated = true;
             exceptionHandler.remove(this);
