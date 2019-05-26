@@ -20,15 +20,13 @@ public class ExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(ExceptionHandler.class);
 
     private Exception exception;
-    private boolean error;
     private Future halt;
 
     private final Collection<ExceptionListener> listeners = new ArrayList<>();
     private final Map<Object, ShutdownAction> shutdownActions = new LinkedHashMap<>();
 
     public synchronized void handle(Exception e) {
-        if (!error) {
-            error = true;
+        if (exception == null) {
             this.exception = e;
             logger.error("An error occurred, shutting down NOW", e);
             final Collection<ShutdownAction> actions = new ArrayList<>(shutdownActions.values());
@@ -61,10 +59,6 @@ public class ExceptionHandler {
 
     public Exception getException() {
         return exception;
-    }
-
-    public boolean isExhausted() {
-        return error;
     }
 
     public void waitForShutdown() throws Exception {

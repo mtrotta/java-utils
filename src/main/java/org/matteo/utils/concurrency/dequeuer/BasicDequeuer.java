@@ -19,10 +19,10 @@ public class BasicDequeuer<T> implements Dequeuer<T> {
     static final TimeUnit UNIT = TimeUnit.NANOSECONDS;
     static final long CLOCK = TimeUnit.SECONDS.toNanos(1);
 
-    BlockingQueue<T> queue;
+    final BlockingQueue<T> queue;
 
-    private String name;
-    private ExecutorService service;
+    private final String name;
+    private final ExecutorService service;
     final Phaser phaser = new Phaser();
 
     final List<Processor<T>> processors = new ArrayList<>();
@@ -109,9 +109,10 @@ public class BasicDequeuer<T> implements Dequeuer<T> {
                     service.shutdown();
                 }, exceptionHandler, name);
                 elapsed = service.awaitTermination(time, unit);
-                if (exceptionHandler.isExhausted()) {
+                Exception exception = exceptionHandler.getException();
+                if (exception != null) {
                     exceptionHandler.waitForShutdown();
-                    throw exceptionHandler.getException();
+                    throw exception;
                 }
             } finally {
                 terminate();
@@ -133,7 +134,7 @@ public class BasicDequeuer<T> implements Dequeuer<T> {
     @Override
     public void enqueue(T t) throws RejectedObjectException, InterruptedException {
         do {
-            if (shutdown || exceptionHandler.isExhausted()) {
+            if (shutdown || exceptionHandler.getException() != null) {
                 throw new RejectedObjectException("Queue has been shutdown or an exception occurred");
             }
         } while (!queue.offer(t, CLOCK, UNIT));

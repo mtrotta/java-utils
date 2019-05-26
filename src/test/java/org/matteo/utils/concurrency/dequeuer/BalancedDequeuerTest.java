@@ -90,7 +90,7 @@ class BalancedDequeuerTest {
             processors.add(new StringProcessor());
         }
         final BalancedDequeuer<String> dequeuer = new BalancedDequeuer<>(processors, false, 1, 20);
-        final int num = 1 << 20;
+        final int num = 1 << 18;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
         }
@@ -120,7 +120,7 @@ class BalancedDequeuerTest {
             processors.add(new ThreadUnsafeProcessor());
         }
         final Dequeuer<String> dequeuer = new BalancedDequeuer<>(processors, false, 1, 1);
-        final long num = 1 << 22;
+        final long num = 1 << 20;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
         }
@@ -142,7 +142,7 @@ class BalancedDequeuerTest {
         }
         final BalancedDequeuer<String> dequeuer = new BalancedDequeuer<>(processors, false, 1, 1);
         dequeuer.setProfile(BalancedDequeuer.Profile.FAST);
-        final int num = 1 << 20;
+        final int num = 1 << 18;
         for (int i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(i));
         }
@@ -159,7 +159,7 @@ class BalancedDequeuerTest {
         final BalancedDequeuer<Collection<String>> dequeuer = new BalancedDequeuer<>(processors, true, 1, 1);
         BalancedDequeuer.Profile profile = BalancedDequeuer.Profile.FAST;
         dequeuer.setProfile(profile);
-        final int num = 1 << 24;
+        final int num = 1 << 20;
         List<String> list = new ArrayList<>();
         for (int i = 0; i < num; i++) {
             list.add(Integer.toString(i));
@@ -186,7 +186,7 @@ class BalancedDequeuerTest {
         }
         final BalancedDequeuer<String> dequeuer = new BalancedDequeuer<>(processors, true, 1, 1);
         dequeuer.setProfile(BalancedDequeuer.Profile.SLOW);
-        final long num = 1 << 23;
+        final long num = 1 << 20;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(Math.random()));
         }
@@ -204,7 +204,7 @@ class BalancedDequeuerTest {
             processors.add(processor);
         }
         final Dequeuer<String> dequeuer = new BalancedDequeuer<>(processors, true, 1, 1);
-        final long num = 1 << 23;
+        final long num = 1 << 20;
         for (long i = 0; i < num; i++) {
             dequeuer.enqueue(String.valueOf(Math.random()));
         }
