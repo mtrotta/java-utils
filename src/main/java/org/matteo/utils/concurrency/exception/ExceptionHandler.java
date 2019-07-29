@@ -38,6 +38,8 @@ public class ExceptionHandler {
                     shutdownAction.shutdownNow();
                 }
             }, "ExceptionHandler");
+        } else {
+            logger.warn("Received exception but another exception was already caught", e);
         }
     }
 

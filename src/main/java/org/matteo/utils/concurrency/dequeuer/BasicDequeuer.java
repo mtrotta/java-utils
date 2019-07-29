@@ -17,7 +17,7 @@ import java.util.concurrent.*;
 public class BasicDequeuer<T> implements Dequeuer<T> {
 
     static final TimeUnit UNIT = TimeUnit.NANOSECONDS;
-    static final long CLOCK = TimeUnit.SECONDS.toNanos(1);
+    static final long CLOCK = UNIT.convert(1, TimeUnit.SECONDS);
 
     final BlockingQueue<T> queue;
 
