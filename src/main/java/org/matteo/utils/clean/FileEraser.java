@@ -38,9 +38,13 @@ public class FileEraser implements Eraser<File> {
     }
 
     @Override
-    public void erase(File file) throws Exception {
+    public void erase(File file) throws EraseException {
         LOGGER.info("Deleting {}", file.getPath());
-        delete(file);
+        try {
+            delete(file);
+        } catch (IOException e) {
+            throw new EraseException(e);
+        }
     }
 
     private static void delete(File path) throws IOException {

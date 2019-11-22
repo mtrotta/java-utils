@@ -9,7 +9,7 @@ import java.util.Collection;
  */
 public interface Eraser<T> {
 
-    void erase(T t) throws Exception;
+    void erase(T t) throws EraseException;
 
     Collection<Deletable<T>> getDeletables();
 

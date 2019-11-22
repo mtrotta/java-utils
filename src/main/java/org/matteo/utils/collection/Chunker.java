@@ -15,13 +15,11 @@ public class Chunker {
         while (iterator.hasNext()) {
             final T item = iterator.next();
             final Object key = keyExtractor.apply(item);
-            if (previousKey == null || previousKey.equals(key)) {
-                chunk.add(item);
-            } else {
+            if (previousKey != null && !previousKey.equals(key)) {
                 onChunk.accept(chunk);
                 chunk = new ArrayList<>();
-                chunk.add(item);
             }
+            chunk.add(item);
             previousKey = key;
         }
         if (!chunk.isEmpty()) {
